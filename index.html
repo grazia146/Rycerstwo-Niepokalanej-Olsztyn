@@ -1,0 +1,259 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f8f7f3">
+<meta name="description" content="Rycerstwo Niepokalanej w Olsztynie. Wspólnota, modlitwa, refleksje i spotkania.">
+<title>Rycerstwo Niepokalanej — Olsztyn</title>
+<style>
+:root{--bg:#f8f7f3;--ink:#1b2d49;--blue:#476b98;--muted:#737b87;--line:#e6e4dc}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,serif;line-height:1.7}
+a{color:inherit;text-decoration:none}
+button,input,textarea{font:inherit}
+.wrap{width:min(1050px,90%);margin:auto}
+header{position:sticky;top:0;z-index:5;background:#f8f7f3ed;backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+nav{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.brand{font-size:16px;font-weight:bold;line-height:1.3}
+.brand small{display:block;font:10px Arial,sans-serif;letter-spacing:3px;color:var(--blue)}
+.links{display:flex;gap:19px;align-items:center;font:12px Arial,sans-serif}
+.links a:hover{color:var(--blue)}
+.menu{display:none;padding:9px;background:transparent;border:1px solid var(--line)}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:35px;align-items:center;padding-block:75px}
+.eyebrow{font:11px Arial,sans-serif;letter-spacing:3px;text-transform:uppercase;color:var(--blue)}
+h1{font-size:clamp(42px,6vw,72px);line-height:1.08;font-weight:normal;letter-spacing:-2px;margin:22px 0}
+h1 em{color:var(--blue)}
+.lead{color:var(--muted);font-size:18px;max-width:450px}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:25px}
+.btn{display:inline-block;padding:12px 18px;background:var(--ink);color:white;border:1px solid var(--ink);cursor:pointer;font:12px Arial,sans-serif}
+.btn.light{background:transparent;color:var(--ink)}
+.art{min-height:340px;display:grid;place-items:center;text-align:center;padding:25px;background:radial-gradient(ellipse,#fff,#dce4ee);border-radius:48% 48% 3px 3px}
+.cross{font-size:120px;color:var(--blue);line-height:1}
+.art p{font-style:italic;color:#52617a}
+.strip{border-block:1px solid var(--line);background:#ffffff80}
+.stripin{display:grid;grid-template-columns:repeat(3,1fr);padding:23px 0;text-align:center}
+.strip strong{display:block;font-weight:normal;font-size:18px}
+.strip span{font:11px Arial,sans-serif;color:var(--muted)}
+section{padding-block:75px}
+h2{font-size:clamp(32px,4vw,45px);font-weight:normal;line-height:1.2;margin:12px 0}
+.sub{color:var(--muted);max-width:600px}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.card{padding:23px;background:white;border:1px solid var(--line);overflow-wrap:anywhere;animation:appear .5s ease both}
+.card h3{font-size:22px;line-height:1.35;font-weight:normal}
+.card p{font-size:14px;color:var(--muted);white-space:pre-wrap}
+.category{font:10px Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;color:var(--blue)}
+.quote{background:var(--ink);color:white;text-align:center;padding:75px 20px}
+.quote blockquote{max-width:750px;margin:20px auto;font-size:clamp(25px,4vw,39px);line-height:1.4}
+.quote cite{font:11px Arial,sans-serif;letter-spacing:2px;color:#e0d1af;font-style:normal}
+.gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.photo{margin:0;background:white;border:1px solid var(--line)}
+.photo img{width:100%;height:220px;object-fit:cover;display:block}
+.photo figcaption{padding:12px;font-size:14px}
+.empty{padding:25px;border:1px dashed #c9cbd0;color:var(--muted);text-align:center}
+.about{display:grid;grid-template-columns:.7fr 1.3fr;gap:30px;align-items:center;background:#eeece5;padding:32px}
+.about-icon{display:grid;place-items:center;min-height:210px;background:#dce4ee;font-size:90px;color:var(--blue)}
+.contact{display:grid;grid-template-columns:.8fr 1.2fr;gap:40px}
+form{display:grid;gap:14px}
+label{display:grid;gap:6px;font:12px Arial,sans-serif}
+input,textarea{width:100%;padding:12px;border:1px solid var(--line);background:white;color:var(--ink)}
+textarea{min-height:120px;resize:vertical}
+.note{font:11px/1.6 Arial,sans-serif;color:var(--muted)}
+footer{padding:25px 0;border-top:1px solid var(--line);font:11px Arial,sans-serif;color:var(--muted)}
+.foot{display:flex;justify-content:space-between;gap:15px}
+@keyframes appear{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important}}
+@media(max-width:720px){
+.menu{display:block}
+.links{display:none;position:absolute;top:72px;left:0;right:0;background:var(--bg);padding:20px 5%;flex-direction:column;align-items:stretch}
+.links.open{display:flex}
+.hero{grid-template-columns:1fr;padding-block:48px;gap:25px}
+.art{min-height:250px}
+section{padding-block:52px}
+.cards{grid-template-columns:1fr}
+.gallery{grid-template-columns:1fr 1fr}
+.photo img{height:150px}
+.about,.contact{grid-template-columns:1fr;gap:23px;padding:22px}
+.about-icon{min-height:145px}
+.strip strong{font-size:14px}
+.strip span{font-size:9px}
+.foot{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<header>
+<nav class="wrap">
+<a class="brand" href="#home">Rycerstwo Niepokalanej<small>OLSZTYN</small></a>
+<button class="menu" id="menu" aria-expanded="false" aria-controls="links">Menu ☰</button>
+<div class="links" id="links">
+<a href="#mysli">Przemyślenia</a>
+<a href="#slowo">Słowo Boże</a>
+<a href="#galeria">Galeria</a>
+<a href="#wspolnota">Wspólnota</a>
+<a href="#kontakt">Kontakt</a>
+</div>
+</nav>
+</header>
+<main>
+<section class="hero wrap" id="home">
+<div>
+<div class="eyebrow">Wiara · Nadzieja · Miłość</div>
+<h1>Razem bliżej <em>Niepokalanej.</em></h1>
+<p class="lead">Miejsce spotkania ludzi, których łączy wiara, modlitwa i pragnienie podążania za Chrystusem przez Maryję.</p>
+<div class="actions">
+<a class="btn" href="#wspolnota">Poznaj nas</a>
+<a class="btn light" href="#mysli">Czytaj refleksje ↗</a>
+</div>
+</div>
+<div class="art">
+<div><div class="cross">✝</div><p>„Uczyńcie wszystko, cokolwiek wam powie.”<br>J 2, 5</p></div>
+</div>
+</section>
+<div class="strip"><div class="wrap stripin">
+<div><strong>Modlitwa</strong><span>Serce naszej drogi</span></div>
+<div><strong>Wspólnota</strong><span>Razem w wierze</span></div>
+<div><strong>Maryja</strong><span>Droga do Chrystusa</span></div>
+</div></div>
+<section class="wrap" id="mysli">
+<div class="eyebrow">Chwile refleksji</div>
+<h2>Słowa, które zostają<br>w sercu.</h2>
+<p class="sub">Myśli o wierze, codzienności i obecności Boga w małych rzeczach.</p>
+<div class="cards" id="articles"></div>
+<p class="note">Powyższe przykładowe teksty można zastąpić refleksjami wspólnoty.</p>
+</section>
+<div class="quote" id="slowo">
+<div class="eyebrow" style="color:#e0d1af">Słowo Boże</div>
+<blockquote id="quote-text">Wszystko mogę w Tym, który mnie umacnia.</blockquote>
+<cite id="quote-ref">LIST DO FILIPIAN 4, 13</cite>
+</div>
+<section class="wrap" id="galeria">
+<div class="eyebrow">Nasze wspomnienia</div>
+<h2>Wspólnota w obiektywie.</h2>
+<p class="sub">Spotkania, rekolekcje, modlitwa i chwile, do których warto wracać.</p>
+<div class="gallery" id="gallery"></div>
+</section>
+<section class="wrap" id="wspolnota">
+<div class="about">
+<div class="about-icon">✧</div>
+<div><div class="eyebrow">Kim jesteśmy?</div>
+<h2>Wiara, która prowadzi do działania.</h2>
+<p>Rycerstwo Niepokalanej to ruch maryjny zainicjowany przez św. Maksymiliana Marię Kolbego. Jego duchowość zachęca do oddania się Niepokalanej i świadomego życia Ewangelią.</p>
+<p>Chcemy tworzyć przestrzeń spotkania, pogłębiać wiarę i dzielić się tym, co pomaga nam wzrastać duchowo.</p></div>
+</div>
+</section>
+<section class="wrap" id="kontakt">
+<div class="contact">
+<div><div class="eyebrow">Pozostańmy w kontakcie</div>
+<h2>Jest miejsce dla Ciebie.</h2>
+<p class="sub">Chcesz poznać wspólnotę lub zapytać o spotkania? Napisz do nas.</p></div>
+<form id="contact">
+<label>Imię<input name="name" required autocomplete="name"></label>
+<label>Twój e-mail<input name="email" type="email" required autocomplete="email"></label>
+<label>Wiadomość<textarea name="message" required></textarea></label>
+<button class="btn" type="submit">Przygotuj wiadomość →</button>
+<p class="note" id="contact-status">Formularz wymaga skonfigurowania adresu e-mail.</p>
+</form>
+</div>
+</section>
+<section class="wrap" id="panel">
+<div style="padding:25px;background:white;border:1px solid #e6e4dc">
+<div class="eyebrow">Wersja demonstracyjna</div>
+<h2>Dodawanie treści</h2>
+<p class="note">Ten prosty panel zapisuje treści wyłącznie w bieżącej przeglądarce. Nie jest zabezpieczony hasłem i nie stanowi jeszcze panelu internetowego.</p>
+<h3>Dodaj refleksję</h3>
+<form id="article-form">
+<label>Tytuł<input name="title" required maxlength="120"></label>
+<label>Kategoria<input name="category" value="Refleksja" required maxlength="60"></label>
+<label>Treść<textarea name="body" required maxlength="4000"></textarea></label>
+<button class="btn">Dodaj artykuł</button>
+</form>
+<h3>Zmień cytat biblijny</h3>
+<form id="quote-form">
+<label>Cytat<textarea name="text" required maxlength="1000"></textarea></label>
+<label>Źródło<input name="ref" required maxlength="100"></label>
+<button class="btn">Zapisz cytat</button>
+</form>
+<h3>Dodaj zdjęcie</h3>
+<form id="photo-form">
+<label>Opis zdjęcia<input name="caption" required maxlength="100"></label>
+<label>Fotografia (JPG, PNG lub WebP)<input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required></label>
+<button class="btn">Dodaj zdjęcie</button>
+</form>
+<p class="note" id="panel-status" aria-live="polite"></p>
+</div>
+</section>
+</main>
+<footer><div class="wrap foot"><span>© <span id="year"></span> Rycerstwo Niepokalanej · Olsztyn</span><a href="#home">Powrót na górę ↑</a></div></footer>
+<script>
+"use strict";
+const KEY="rycerstwo_olsztyn_demo";
+const EMAIL="";
+const defaults={
+articles:[
+{id:"1",category:"Życie duchowe",title:"Odnaleźć Boga w codzienności",body:"Nie zawsze potrzeba wielkich wydarzeń. Czasem najgłębsze spotkanie z Bogiem dokonuje się w ciszy, modlitwie i zwyczajnym geście dobra."},
+{id:"2",category:"Maryja",title:"Uczyć się zaufania",body:"Maryja przypomina nam, że wiara nie oznacza znajomości odpowiedzi na wszystkie pytania, ale gotowość, by zrobić kolejny krok."},
+{id:"3",category:"Wspólnota",title:"Dobro, które nas łączy",body:"Wspólnota wzrasta wtedy, gdy znajdujemy czas dla drugiego człowieka, słuchamy i wspieramy się nawzajem."}
+],photos:[],quote:{text:"Wszystko mogę w Tym, który mnie umacnia.",ref:"List do Filipian 4, 13"}
+};
+function readData(){
+try{
+const v=JSON.parse(localStorage.getItem(KEY));
+if(v&&Array.isArray(v.articles)&&Array.isArray(v.photos)&&v.quote)return v;
+}catch(e){}
+return JSON.parse(JSON.stringify(defaults));
+}
+let data=readData();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function save(){
+try{localStorage.setItem(KEY,JSON.stringify(data));$("panel-status").textContent="Zapisano w tej przeglądarce."}
+catch(e){$("panel-status").textContent="Brak miejsca na zapis. Spróbuj mniejszego zdjęcia."}
+}
+function render(){
+$("articles").innerHTML=data.articles.map(a=>`<article class="card"><div class="symbol">✧</div><div class="category">${esc(a.category)}</div><h3>${esc(a.title)}</h3><p>${esc(a.body)}</p></article>`).join("")||'<p class="empty">Brak artykułów.</p>';
+$("quote-text").textContent=data.quote.text;
+$("quote-ref").textContent=data.quote.ref;
+$("gallery").innerHTML=data.photos.map(p=>`<figure class="photo"><img src="${p.src}" alt="${esc(p.caption)}" loading="lazy"><figcaption>${esc(p.caption)}</figcaption></figure>`).join("")||'<p class="empty" style="grid-column:1/-1">Tutaj pojawią się zdjęcia ze spotkań i rekolekcji.</p>';
+}
+$("article-form").addEventListener("submit",e=>{
+e.preventDefault();const f=new FormData(e.currentTarget);
+data.articles.unshift({id:Date.now().toString(),title:f.get("title").trim(),category:f.get("category").trim(),body:f.get("body").trim()});
+save();render();e.currentTarget.reset();
+});
+$("quote-form").addEventListener("submit",e=>{
+e.preventDefault();const f=new FormData(e.currentTarget);
+data.quote={text:f.get("text").trim(),ref:f.get("ref").trim()};save();render();
+});
+$("photo-form").addEventListener("submit",e=>{
+e.preventDefault();const f=new FormData(e.currentTarget),file=f.get("photo");
+if(!file||!file.type.startsWith("image/"))return;
+if(file.size>800000){$("panel-status").textContent="Zdjęcie musi mieć mniej niż 800 KB. Zmniejsz je przed dodaniem.";return;}
+const reader=new FileReader();
+reader.onload=()=>{
+data.photos.push({id:Date.now().toString(),caption:f.get("caption").trim(),src:reader.result});
+save();render();e.currentTarget.reset();
+};
+reader.readAsDataURL(file);
+});
+$("contact").addEventListener("submit",e=>{
+e.preventDefault();
+if(!EMAIL){$("contact-status").textContent="Formularz jest gotowy, ale trzeba ustawić adres e-mail w zmiennej EMAIL w kodzie.";return;}
+const f=new FormData(e.currentTarget);
+const body=`Imię: ${f.get("name")}\nE-mail: ${f.get("email")}\n\n${f.get("message")}`;
+location.href=`mailto:${EMAIL}?subject=${encodeURIComponent("Wiadomość ze strony wspólnoty")}&body=${encodeURIComponent(body)}`;
+});
+$("menu").addEventListener("click",()=>{
+const open=$("links").classList.toggle("open");
+$("menu").setAttribute("aria-expanded",String(open));
+});
+$("links").querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>{
+$("links").classList.remove("open");$("menu").setAttribute("aria-expanded","false");
+}));
+$("year").textContent=new Date().getFullYear();
+render();
+</script>
+</body>
+</html>
