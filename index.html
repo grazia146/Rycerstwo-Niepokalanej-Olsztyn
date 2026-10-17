@@ -134,6 +134,35 @@ section{padding-block:52px}
 <h2>Wspólnota w obiektywie.</h2>
 <p class="sub">Spotkania, rekolekcje, modlitwa i chwile, do których warto wracać.</p>
 <div class="gallery" id="gallery"></div>
+  <div class="upload-box">
+  <h3>Dodaj zdjęcie do galerii</h3>
+  <p>Podziel się wspomnieniem ze spotkania naszej wspólnoty.</p>
+
+  <form id="public-photo-form">
+    <label>
+      Podpis zdjęcia
+      <input
+        name="caption"
+        maxlength="100"
+        required
+        placeholder="Np. Spotkanie wspólnoty"
+      >
+    </label>
+
+    <label>
+      Wybierz zdjęcie (JPG, PNG lub WebP)
+      <input
+        name="photo"
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        required
+      >
+    </label>
+
+    <button class="btn" type="submit">Prześlij zdjęcie</button>
+    <p id="upload-status" class="note" aria-live="polite"></p>
+  </form>
+</div>
 </section>
 <section class="wrap" id="wspolnota">
 <div class="about">
@@ -187,8 +216,12 @@ section{padding-block:52px}
 </section>
 </main>
 <footer><div class="wrap foot"><span>© <span id="year"></span> Rycerstwo Niepokalanej · Olsztyn</span><a href="#home">Powrót na górę ↑</a></div></footer>
-<script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script> 
 "use strict";
+const sb = window.supabase.createClient(
+"https://vmrcvypdaiubowgxvdwm.supabase.co",
+"sb_publishable_pj6zzQNcL3M4M1sJz0PZhg_eyIUH6UL"
 const KEY="rycerstwo_olsztyn_demo";
 const EMAIL="";
 const defaults={
@@ -213,11 +246,144 @@ try{localStorage.setItem(KEY,JSON.stringify(data));$("panel-status").textContent
 catch(e){$("panel-status").textContent="Brak miejsca na zapis. Spróbuj mniejszego zdjęcia."}
 }
 function render(){
-$("articles").innerHTML=data.articles.map(a=>`<article class="card"><div class="symbol">✧</div><div class="category">${esc(a.category)}</div><h3>${esc(a.title)}</h3><p>${esc(a.body)}</p></article>`).join("")||'<p class="empty">Brak artykułów.</p>';
-$("quote-text").textContent=data.quote.text;
-$("quote-ref").textContent=data.quote.ref;
-$("gallery").innerHTML=data.photos.map(p=>`<figure class="photo"><img src="${p.src}" alt="${esc(p.caption)}" loading="lazy"><figcaption>${esc(p.caption)}</figcaption></figure>`).join("")||'<p class="empty" style="grid-column:1/-1">Tutaj pojawią się zdjęcia ze spotkań i rekolekcji.</p>';
+$("articles").innerHTML=data.articles.map(a=>
+    `<article class="card">
+      <div class="symbol">✧</div>
+      <div class="category">${esc(a.category)}</div>
+      <h3>${esc(a.title)}</h3>
+      <p>${esc(a.body)}</p>
+    </article>`
+  ).join("") || '<p class="empty">Brak artykułów.</p>';
+
+  $("quote-text").textContent=data.quote.text;
+  $("quote-ref").textContent=data.quote.ref;
+
+  renderGallery();
 }
+let galleryPhotos = [];
+
+function renderGallery() {
+  const gallery = $("gallery");
+
+  gallery.innerHTML = galleryPhotos.map(p => {
+    const url = sb.storage
+      .from("gallery")
+      .getPublicUrl(p.storage_path).data.publicUrl;
+
+    return `<figure class="photo">
+      <img src="${esc(url)}"
+           alt="${esc(p.caption)}"
+           loading="lazy">
+      <figcaption>${esc(p.caption)}</figcaption>
+    </figure>`;
+  }).join("") ||
+    '<p class="empty" style="grid-column:1/-1">Galeria czeka na pierwsze zdjęcia.</p>';
+}
+
+async function loadGallery() {
+  const { data: photos, error } = await sb
+    .from("gallery_photos")
+    .select("id, caption, storage_path, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Błąd pobierania galerii:", error);
+    $("gallery").innerHTML =
+      '<p class="empty">Nie udało się pobrać zdjęć.</p>';
+    return;
+  }
+
+  galleryPhotos = photos || [];
+  renderGallery();
+}
+
+const publicPhotoForm = $("public-photo-form");
+
+publicPhotoForm.addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const form = e.currentTarget;
+  const formData = new FormData(form);
+  const caption = String(formData.get("caption") || "").trim();
+  const file = formData.get("photo");
+  const status = $("upload-status");
+  const button = form.querySelector('button[type="submit"]');
+
+  if (!file || !file.size) {
+    status.textContent = "Wybierz zdjęcie.";
+    return;
+  }
+
+  const extensions = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp"
+  };
+
+  if (!extensions[file.type]) {
+    status.textContent = "Wybierz zdjęcie JPG, PNG lub WebP.";
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    status.textContent = "Maksymalny rozmiar zdjęcia to 2 MB.";
+    return;
+  }
+
+  if (!caption || caption.length > 100) {
+    status.textContent = "Wpisz podpis do 100 znaków.";
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "Przesyłanie zdjęcia...";
+
+  const path = `${crypto.randomUUID()}.${extensions[file.type]}`;
+  let uploaded = false;
+
+  try {
+    const { error: uploadError } = await sb.storage
+      .from("gallery")
+      .upload(path, file, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (uploadError) throw uploadError;
+    uploaded = true;
+
+    const { error: insertError } = await sb
+      .from("gallery_photos")
+      .insert({
+        caption,
+        storage_path: path
+      });
+
+    if (insertError) throw insertError;
+
+    status.textContent = "Zdjęcie zostało dodane!";
+    form.reset();
+    await loadGallery();
+
+  } catch (error) {
+    console.error("Błąd dodawania zdjęcia:", error);
+
+    if (uploaded) {
+      const { error: cleanupError } = await sb.storage
+        .from("gallery")
+        .remove([path]);
+
+      if (cleanupError) {
+        console.error("Nie udało się usunąć nieużywanego pliku:", cleanupError);
+      }
+    }
+
+    status.textContent =
+      "Nie udało się dodać zdjęcia. Sprawdź ustawienia Supabase.";
+  } finally {
+    button.disabled = false;
+  }
+});
 $("article-form").addEventListener("submit",e=>{
 e.preventDefault();const f=new FormData(e.currentTarget);
 data.articles.unshift({id:Date.now().toString(),title:f.get("title").trim(),category:f.get("category").trim(),body:f.get("body").trim()});
@@ -252,8 +418,10 @@ $("menu").setAttribute("aria-expanded",String(open));
 $("links").querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>{
 $("links").classList.remove("open");$("menu").setAttribute("aria-expanded","false");
 }));
-$("year").textContent=new Date().getFullYear();
+$("year").textContent = new Date().getFullYear();
 render();
+loadGallery();
 </script>
 </body>
 </html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
