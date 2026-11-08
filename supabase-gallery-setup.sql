@@ -31,7 +31,7 @@ begin
   if p_caption is null or length(trim(p_caption)) = 0 or length(p_caption) > 100 then
     raise exception 'Invalid caption';
   end if;
-  if p_storage_path is null or p_storage_path !~ '^[0-9a-fA-F-]{36}\\.(jpg|png|webp)$' then
+  if p_storage_path is null or p_storage_path !~ '^[0-9a-fA-F-]{36}\.(jpg|png|webp)$' then
     raise exception 'Invalid storage path';
   end if;
   if p_owner_token is null or length(p_owner_token) < 32 or length(p_owner_token) > 200 then
