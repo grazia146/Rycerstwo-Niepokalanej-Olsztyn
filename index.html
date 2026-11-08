@@ -30,9 +30,11 @@ h1 em{color:var(--blue)}
 .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:25px}
 .btn{display:inline-block;padding:12px 18px;background:var(--ink);color:white;border:1px solid var(--ink);cursor:pointer;font:12px Arial,sans-serif}
 .btn.light{background:transparent;color:var(--ink)}
-.art{min-height:340px;display:grid;place-items:center;text-align:center;padding:25px;background:radial-gradient(ellipse,#fff,#dce4ee);border-radius:48% 48% 3px 3px}
-.cross{font-size:120px;color:var(--blue);line-height:1}
-.art p{font-style:italic;color:#52617a}
+.community-photo{aspect-ratio:4/3;min-height:300px;padding:12px;background:linear-gradient(145deg,#e8edf3,#d5dfeb);border:1px solid #d5dce5;box-shadow:0 18px 45px #1b2d4914}
+.community-photo-placeholder{height:100%;min-height:276px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;border:1px dashed #8da0b8;background:linear-gradient(145deg,#f9fafbba,#ffffff70)}
+.community-photo-icon{font-size:58px;line-height:1;color:var(--blue);margin-bottom:14px}
+.community-photo-title{font-size:21px;color:var(--ink);margin:0 0 6px}
+.community-photo-note{font:11px/1.6 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:0}
 .strip{border-block:1px solid var(--line);background:#ffffff80}
 .stripin{display:grid;grid-template-columns:repeat(3,1fr);padding:23px 0;text-align:center}
 .strip strong{display:block;font-weight:normal;font-size:18px}
@@ -79,7 +81,7 @@ footer{padding:25px 0;border-top:1px solid var(--line);font:11px Arial,sans-seri
 .links{display:none;position:absolute;top:72px;left:0;right:0;background:var(--bg);padding:20px 5%;flex-direction:column;align-items:stretch}
 .links.open{display:flex}
 .hero{grid-template-columns:1fr;padding-block:48px;gap:25px}
-.art{min-height:250px}
+.community-photo{min-height:240px}.community-photo-placeholder{min-height:216px}.community-photo-title{font-size:18px}
 section{padding-block:52px}
 .cards{grid-template-columns:1fr}
 .gallery{grid-template-columns:1fr 1fr}
@@ -117,8 +119,12 @@ section{padding-block:52px}
 <a class="btn light" href="#mysli">Czytaj refleksje ↗</a>
 </div>
 </div>
-<div class="art">
-<div><div class="cross">✝</div><p>„Uczyńcie wszystko, cokolwiek wam powie.”<br>J 2, 5</p></div>
+<div class="community-photo" aria-label="Miejsce na zdjęcie wspólnoty">
+<div class="community-photo-placeholder">
+<div class="community-photo-icon" aria-hidden="true">✧</div>
+<p class="community-photo-title">Nasza wspólnota</p>
+<p class="community-photo-note">W tym miejscu pokażemy wspólne zdjęcie</p>
+</div>
 </div>
 </section>
 <div class="strip"><div class="wrap stripin">
