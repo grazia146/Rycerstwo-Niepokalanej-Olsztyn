@@ -97,11 +97,12 @@ grant execute on function public.delete_gallery_photo(text, text) to anon, authe
 
 -- Publiczne przesylanie tylko do bucketu gallery.
 -- Bucket jest publiczny do wyswietlania zdjec; zapis nadal podlega polityce.
-update storage.buckets
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('gallery', 'gallery', true, 2097152, array['image/jpeg','image/png','image/webp'])
+on conflict (id) do update
 set public = true,
     file_size_limit = 2097152,
-    allowed_mime_types = array['image/jpeg','image/png','image/webp']
-where id = 'gallery';
+    allowed_mime_types = excluded.allowed_mime_types;
 
 do $$
 begin
