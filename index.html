@@ -44,6 +44,20 @@ h2{font-size:clamp(32px,4vw,45px);font-weight:normal;line-height:1.2;margin:12px
 .card h3{font-size:22px;line-height:1.35;font-weight:normal}
 .card p{font-size:14px;color:var(--muted);white-space:pre-wrap}
 .category{font:10px Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;color:var(--blue)}
+.quote-author{font:12px Arial,sans-serif;color:#e0d1af;margin:10px 0 22px}
+.quote-edit-button{margin-top:24px}
+.quote-edit-form{max-width:680px;margin:28px auto 0;padding:22px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);text-align:left}
+.quote-edit-form label{color:#fff}
+.quote-edit-form input,.quote-edit-form textarea{background:#fff;color:#17243a}
+.quote-edit-actions{display:flex;gap:10px;flex-wrap:wrap}
+.quote-edit-form .note{color:#e0d1af}
+.verse-archive{padding-block:55px}
+.verse-history{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.verse-history-card{padding:22px;background:#fff;border:1px solid var(--line)}
+.verse-history-card blockquote{font:italic 18px/1.55 Georgia,serif;margin:0 0 14px;color:var(--ink)}
+.verse-history-card cite{font:10px Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.verse-history-meta{font:11px Arial,sans-serif;color:var(--muted);margin-top:12px}
+@media(max-width:720px){.verse-history{grid-template-columns:1fr}}
 .quote{background:var(--ink);color:white;text-align:center;padding:75px 20px}
 .quote blockquote{max-width:750px;margin:20px auto;font-size:clamp(25px,4vw,39px);line-height:1.4}
 .quote cite{font:11px Arial,sans-serif;letter-spacing:2px;color:#e0d1af;font-style:normal}
@@ -92,7 +106,7 @@ section{padding-block:52px}
 .cards{grid-template-columns:1fr}
 .gallery{grid-template-columns:1fr 1fr}
 .photo img{height:150px}
-..about,.contact{grid-template-columns:1fr;gap:23px;padding:22px}
+.about,.contact{grid-template-columns:1fr;gap:23px;padding:22px}
 .reflection-layout{grid-template-columns:1fr;gap:22px}
 .about-icon{min-height:145px}
 .strip strong{font-size:14px}
@@ -197,7 +211,32 @@ section{padding-block:52px}
 <div class="eyebrow" style="color:#e0d1af">Słowo Boże</div>
 <blockquote id="quote-text">Wszystko mogę w Tym, który mnie umacnia.</blockquote>
 <cite id="quote-ref">LIST DO FILIPIAN 4, 13</cite>
+<p class="quote-author" id="quote-author"></p>
+<button class="btn light quote-edit-button" type="button" id="quote-edit-open">Edytuj Słowo Boże</button>
+<form class="quote-edit-form" id="quote-edit-form" hidden>
+  <label>Treść cytatu
+    <textarea name="verseText" id="verse-input" minlength="10" maxlength="1200" required placeholder="Wklej treść cytatu..."></textarea>
+  </label>
+  <label>Źródło / siglum biblijne
+    <input name="verseReference" id="verse-reference-input" maxlength="120" required placeholder="Np. Ewangelia według św. Mateusza 5, 3">
+  </label>
+  <label>Podpis (opcjonalnie)
+    <input name="authorName" maxlength="80" placeholder="Kto dodał cytat?">
+  </label>
+  <label class="honeypot" aria-hidden="true">Nie wypełniaj tego pola<input name="website" tabindex="-1" autocomplete="off"></label>
+  <div class="quote-edit-actions">
+    <button class="btn" type="submit">Opublikuj nowe Słowo Boże</button>
+    <button class="btn light" type="button" id="quote-edit-cancel">Anuluj</button>
+  </div>
+  <p class="note" id="quote-edit-status" aria-live="polite">Nowy cytat zastąpi obecny. Poprzedni automatycznie trafi do archiwum.</p>
+</form>
 </div>
+<section class="wrap verse-archive" id="archiwum-slowa">
+  <div class="eyebrow">Do których wracamy</div>
+  <h2>Archiwum Słowa Bożego.</h2>
+  <p class="sub">Wcześniejsze cytaty pozostają tutaj zapisane, nawet gdy na stronie pojawi się już nowe Słowo Boże.</p>
+  <div class="verse-history" id="verse-history" aria-live="polite"><p class="empty">Ładowanie archiwum...</p></div>
+</section>
 <section class="wrap" id="galeria">
 <div class="eyebrow">Nasze wspomnienia</div>
 <h2>Wspólnota w obiektywie.</h2>
@@ -554,6 +593,80 @@ async function submitCommunityPost(formId, statusId, action, kind) {
 }
 submitCommunityPost("reflection-form", "reflection-status", "submit_reflection", "reflection");
 submitCommunityPost("announcement-form", "announcement-status", "submit_announcement", "announcement");
+
+async function loadCommunityVerse() {
+  const { data: current, error } = await sb.from("community_verse_current")
+    .select("verse_text, verse_reference, author_name, updated_at").eq("id", 1).maybeSingle();
+  if (error) {
+    console.error("Nie udało się pobrać Słowa Bożego:", error);
+    return;
+  }
+  if (current) {
+    $("quote-text").textContent = current.verse_text;
+    $("quote-ref").textContent = current.verse_reference;
+    $("quote-author").textContent = current.author_name ? "Dodał(a): " + current.author_name : "";
+    $("verse-input").value = current.verse_text;
+    $("verse-reference-input").value = current.verse_reference;
+  }
+  const { data: history, error: historyError } = await sb.from("community_verse_history")
+    .select("id, verse_text, verse_reference, author_name, archived_at")
+    .order("archived_at", { ascending: false }).limit(100);
+  const archive = $("verse-history");
+  if (historyError) {
+    console.error("Nie udało się pobrać archiwum Słowa Bożego:", historyError);
+    archive.innerHTML = '<p class="empty">Nie udało się pobrać archiwum.</p>';
+    return;
+  }
+  if (!history || !history.length) {
+    archive.innerHTML = '<p class="empty">To pierwsze Słowo Boże w nowej odsłonie. Gdy zostanie zmienione, poprzedni cytat pojawi się tutaj.</p>';
+    return;
+  }
+  archive.innerHTML = history.map(item => {
+    const date = new Date(item.archived_at).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" });
+    const author = item.author_name ? " · " + esc(item.author_name) : "";
+    return `<article class="verse-history-card"><blockquote>${esc(item.verse_text)}</blockquote><cite>${esc(item.verse_reference)}</cite><div class="verse-history-meta">W archiwum od ${esc(date)}${author}</div></article>`;
+  }).join("");
+}
+$("quote-edit-open").addEventListener("click", () => {
+  $("quote-edit-form").hidden = false;
+  $("quote-edit-open").hidden = true;
+  $("verse-input").focus();
+});
+$("quote-edit-cancel").addEventListener("click", () => {
+  $("quote-edit-form").hidden = true;
+  $("quote-edit-open").hidden = false;
+  $("quote-edit-status").textContent = "Zmiany anulowane.";
+});
+$("quote-edit-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const form = e.currentTarget, fd = new FormData(form);
+  const verseText = String(fd.get("verseText") || "").trim();
+  const verseReference = String(fd.get("verseReference") || "").trim();
+  const authorName = String(fd.get("authorName") || "").trim();
+  const status = $("quote-edit-status"), button = form.querySelector('button[type="submit"]');
+  if (verseText.length < 10 || verseText.length > 1200 || !verseReference || verseReference.length > 120 || authorName.length > 80) {
+    status.textContent = "Sprawdź treść cytatu, źródło i podpis.";
+    return;
+  }
+  button.disabled = true;
+  status.textContent = "Zapisywanie nowego Słowa Bożego...";
+  try {
+    const { data, error } = await sb.functions.invoke("gallery-manage", {
+      body: { action: "update_verse", verseText, verseReference, authorName, website: String(fd.get("website") || "") }
+    });
+    if (error || data?.updated !== true) throw error || new Error("Update failed");
+    status.textContent = "Nowe Słowo Boże zostało opublikowane. Poprzedni cytat zapisano w archiwum.";
+    $("quote-edit-form").hidden = true;
+    $("quote-edit-open").hidden = false;
+    await loadCommunityVerse();
+  } catch (error) {
+    console.error("Nie udało się zmienić Słowa Bożego:", error);
+    status.textContent = "Nie udało się opublikować zmiany. Spróbuj ponownie.";
+  } finally {
+    button.disabled = false;
+  }
+});
+loadCommunityVerse();
 
 const publicPhotoForm = $("public-photo-form");
 
