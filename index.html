@@ -61,6 +61,15 @@ h2{font-size:clamp(32px,4vw,45px);font-weight:normal;line-height:1.2;margin:12px
 .lightbox img{max-width:min(100%,1100px);max-height:85vh;object-fit:contain}
 .lightbox-close{position:absolute;top:16px;right:18px;border:1px solid #ffffff70;background:#17243a;color:white;padding:10px 14px;cursor:pointer;font:14px Arial,sans-serif}
 .empty{padding:25px;border:1px dashed #c9cbd0;color:var(--muted);text-align:center}
+.reflection-layout{display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;align-items:start}
+.reflection-form{padding:24px;background:#fff;border:1px solid var(--line)}
+.reflection-list{display:grid;gap:14px}
+.reflection-card{padding:20px 22px;background:#fff;border:1px solid var(--line)}
+.reflection-card p{margin:0 0 14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.reflection-meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font:11px Arial,sans-serif}
+.reflection-anonymous{display:flex;align-items:center;gap:9px;font:13px Arial,sans-serif}
+.reflection-anonymous input{width:auto}
+.honeypot{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 .about{display:grid;grid-template-columns:.7fr 1.3fr;gap:30px;align-items:center;background:#eeece5;padding:32px}
 .about-icon{display:grid;place-items:center;min-height:210px;background:#dce4ee;font-size:90px;color:var(--blue)}
 .contact{display:grid;grid-template-columns:.8fr 1.2fr;gap:40px}
@@ -83,7 +92,8 @@ section{padding-block:52px}
 .cards{grid-template-columns:1fr}
 .gallery{grid-template-columns:1fr 1fr}
 .photo img{height:150px}
-.about,.contact{grid-template-columns:1fr;gap:23px;padding:22px}
+..about,.contact{grid-template-columns:1fr;gap:23px;padding:22px}
+.reflection-layout{grid-template-columns:1fr;gap:22px}
 .about-icon{min-height:145px}
 .strip strong{font-size:14px}
 .strip span{font-size:9px}
@@ -98,6 +108,7 @@ section{padding-block:52px}
 <button class="menu" id="menu" aria-expanded="false" aria-controls="links">Menu ☰</button>
 <div class="links" id="links">
 <a href="#mysli">Przemyślenia</a>
+<a href="#refleksje">Dodaj refleksję</a>
 <a href="#slowo">Słowo Boże</a>
 <a href="#galeria">Galeria</a>
 <a href="#wspolnota">Wspólnota</a>
@@ -113,7 +124,7 @@ section{padding-block:52px}
 <p class="lead">Miejsce spotkania ludzi, których łączy wiara, modlitwa i pragnienie podążania za Chrystusem przez Maryję.</p>
 <div class="actions">
 <a class="btn" href="#wspolnota">Poznaj nas</a>
-<a class="btn light" href="#mysli">Czytaj refleksje ↗</a>
+<a class="btn light" href="#refleksje">Podziel się refleksją ↗</a>
 </div>
 </div>
 <div class="community-photo" aria-label="Zdjęcie wspólnoty">
@@ -131,6 +142,38 @@ section{padding-block:52px}
 <p class="sub">Myśli o wierze, codzienności i obecności Boga w małych rzeczach.</p>
 <div class="cards" id="articles"></div>
 <p class="note">Powyższe przykładowe teksty można zastąpić refleksjami wspólnoty.</p>
+</section>
+<section class="wrap" id="refleksje">
+  <div class="eyebrow">Głos naszej wspólnoty</div>
+  <h2>Podziel się refleksją.</h2>
+  <p class="sub">Napisz, co poruszyło Twoje serce, czego doświadczasz w wierze lub czym chcesz podzielić się z innymi. Możesz podpisać się imieniem albo opublikować wpis anonimowo.</p>
+  <div class="reflection-layout">
+    <form class="reflection-form" id="reflection-form">
+      <label>
+        Twój podpis
+        <input name="authorName" id="reflection-author" maxlength="80" placeholder="Np. Anna">
+      </label>
+      <label class="reflection-anonymous">
+        <input type="checkbox" name="anonymous" id="reflection-anonymous">
+        Opublikuj anonimowo
+      </label>
+      <label>
+        Twoja refleksja
+        <textarea name="body" minlength="10" maxlength="3000" required placeholder="Napisz swoją refleksję..."></textarea>
+      </label>
+      <label class="honeypot" aria-hidden="true">
+        Nie wypełniaj tego pola
+        <input name="website" tabindex="-1" autocomplete="off">
+      </label>
+      <button class="btn" type="submit">Opublikuj refleksję</button>
+      <p class="note" id="reflection-status" aria-live="polite">Wpis pojawi się na stronie od razu i będzie widoczny dla wszystkich. Nie podawaj danych wrażliwych.</p>
+    </form>
+    <div>
+      <div class="reflection-list" id="reflection-list" aria-live="polite">
+        <p class="empty">Ładowanie refleksji...</p>
+      </div>
+    </div>
+  </div>
 </section>
 <div class="quote" id="slowo">
 <div class="eyebrow" style="color:#e0d1af">Słowo Boże</div>
@@ -346,6 +389,92 @@ async function loadGallery() {
   renderGallery();
 }
 
+async function loadReflections() {
+  const list = $("reflection-list");
+  const { data: reflections, error } = await sb
+    .from("community_reflections")
+    .select("id, author_name, is_anonymous, body, created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    console.error("Błąd pobierania refleksji:", error);
+    list.innerHTML = '<p class="empty">Nie udało się pobrać refleksji. Spróbuj ponownie później.</p>';
+    return;
+  }
+
+  if (!reflections || !reflections.length) {
+    list.innerHTML = '<p class="empty">Bądź pierwszą osobą, która podzieli się refleksją.</p>';
+    return;
+  }
+
+  list.innerHTML = reflections.map(item => {
+    const author = item.is_anonymous ? "Anonimowo" : item.author_name;
+    const date = new Date(item.created_at).toLocaleDateString("pl-PL", {
+      day: "numeric", month: "long", year: "numeric"
+    });
+    return `<article class="reflection-card">
+      <p>${esc(item.body)}</p>
+      <div class="reflection-meta"><span>${esc(author)}</span><time datetime="${esc(item.created_at)}">${esc(date)}</time></div>
+    </article>`;
+  }).join("");
+}
+
+const reflectionForm = $("reflection-form");
+const reflectionAnonymous = $("reflection-anonymous");
+const reflectionAuthor = $("reflection-author");
+reflectionAnonymous.addEventListener("change", () => {
+  reflectionAuthor.disabled = reflectionAnonymous.checked;
+  reflectionAuthor.required = !reflectionAnonymous.checked;
+  if (reflectionAnonymous.checked) reflectionAuthor.value = "";
+});
+reflectionAuthor.required = true;
+
+reflectionForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const formData = new FormData(form);
+  const status = $("reflection-status");
+  const button = form.querySelector('button[type="submit"]');
+  const isAnonymous = reflectionAnonymous.checked;
+  const body = String(formData.get("body") || "").trim();
+  const authorName = String(formData.get("authorName") || "").trim();
+
+  if (body.length < 10 || body.length > 3000) {
+    status.textContent = "Refleksja powinna mieć od 10 do 3000 znaków.";
+    return;
+  }
+  if (!isAnonymous && (!authorName || authorName.length > 80)) {
+    status.textContent = "Wpisz podpis lub wybierz publikację anonimową.";
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "Publikowanie refleksji...";
+  try {
+    const { data: result, error } = await sb.functions.invoke("gallery-manage", {
+      body: {
+        action: "submit_reflection",
+        body,
+        authorName,
+        isAnonymous,
+        website: String(formData.get("website") || "")
+      }
+    });
+    if (error || !result?.reflectionId) throw error || new Error("Nie udało się opublikować refleksji.");
+    form.reset();
+    reflectionAuthor.disabled = false;
+    reflectionAuthor.required = true;
+    status.textContent = "Dziękujemy! Twoja refleksja jest już opublikowana.";
+    await loadReflections();
+  } catch (error) {
+    console.error("Błąd publikowania refleksji:", error);
+    status.textContent = "Nie udało się opublikować wpisu. Spróbuj ponownie za chwilę.";
+  } finally {
+    button.disabled = false;
+  }
+});
+
 const publicPhotoForm = $("public-photo-form");
 
 publicPhotoForm.addEventListener("submit", async e => {
@@ -454,6 +583,7 @@ $("links").classList.remove("open");$("menu").setAttribute("aria-expanded","fals
 $("year").textContent = new Date().getFullYear();
 render();
 loadGallery();
+loadReflections();
 </script>
 </body>
 </html>
