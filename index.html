@@ -309,10 +309,14 @@ function renderGallery() {
       if (!token) return;
       button.disabled = true;
       button.textContent = "Usuwanie...";
-      const { data: deleted, error } = await sb.rpc("delete_gallery_photo", {
-        p_photo_id: String(button.dataset.photoId),
-        p_owner_token: token
+      const { data, error } = await sb.functions.invoke("gallery-manage", {
+        body: {
+          action: "delete",
+          photoId: String(button.dataset.photoId),
+          ownerToken: token
+        }
       });
+      const deleted = data?.deleted === true;
       if (error || deleted !== true) {
         console.error("Błąd usuwania zdjęcia:", error);
         alert("Nie udało się usunąć zdjęcia. Spróbuj ponownie.");
@@ -399,14 +403,17 @@ publicPhotoForm.addEventListener("submit", async e => {
     uploaded = true;
 
     const ownerToken = crypto.randomUUID() + crypto.randomUUID();
-    const { data: photoId, error: insertError } = await sb.rpc("publish_gallery_photo", {
-      p_caption: caption,
-      p_storage_path: path,
-      p_owner_token: ownerToken
+    const { data: published, error: insertError } = await sb.functions.invoke("gallery-manage", {
+      body: {
+        action: "publish",
+        caption,
+        storagePath: path,
+        ownerToken
+      }
     });
 
-    if (insertError) throw insertError;
-    saveOwnerToken(photoId, ownerToken);
+    if (insertError || !published?.photoId) throw insertError || new Error("Nie udało się opublikować zdjęcia.");
+    saveOwnerToken(published.photoId, ownerToken);
 
     status.textContent = "Zdjęcie zostało dodane!";
     form.reset();
