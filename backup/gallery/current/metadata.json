@@ -1,14 +1,20 @@
 {
-  "backup_created_at": "2026-11-08T15:45:57.066Z",
+  "backup_created_at": "2026-11-08T16:27:37.213Z",
   "project": "Rycerstwo Niepokalanej Olsztyn",
   "bucket": "gallery",
-  "photo_count": 1,
+  "photo_count": 2,
   "photos": [
     {
-      "id": 4,
-      "caption": "Spotkanie w Niepokalanowie",
-      "storage_path": "048de10c-1b52-4d2e-b7eb-299fd6e9eb86.jpg",
-      "created_at": "2026-11-08T15:43:25.261097+00:00"
+      "id": 5,
+      "caption": "Wizyta w Niepokalanowie",
+      "storage_path": "1cb4d6a5-1074-4076-a26e-7bd9c666f1f7.jpg",
+      "created_at": "2026-11-08T16:07:36.5855+00:00"
+    },
+    {
+      "id": 6,
+      "caption": "Wizyta w Niepokalanowie",
+      "storage_path": "60e098a3-beef-4083-9f87-15cf663b308e.jpg",
+      "created_at": "2026-11-08T16:08:11.057104+00:00"
     }
   ]
 }
