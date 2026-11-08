@@ -46,6 +46,7 @@ const admin = supabaseUrl && serviceKey
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "GET") return response({ status: "ok", service: "gallery-manage" });
   if (req.method !== "POST") return response({ error: "Method not allowed" }, 405);
   if (!admin || !publishableKey) return response({ error: "Server configuration error" }, 500);
   if (req.headers.get("apikey") !== publishableKey) return response({ error: "Unauthorized client" }, 401);
