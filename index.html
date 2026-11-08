@@ -66,7 +66,7 @@ h2{font-size:clamp(32px,4vw,45px);font-weight:normal;line-height:1.2;margin:12px
 .reflection-list{display:grid;gap:14px}
 .reflection-card{padding:20px 22px;background:#fff;border:1px solid var(--line)}
 .reflection-card p{margin:0 0 14px;white-space:pre-wrap;overflow-wrap:anywhere}
-.reflection-meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font:11px Arial,sans-serif}
+.reflection-card h3{font-size:21px;font-weight:normal;line-height:1.3;margin:8px 0 12px}\n.reflection-meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font:11px Arial,sans-serif}
 .reflection-anonymous{display:flex;align-items:center;gap:9px;font:13px Arial,sans-serif}
 .reflection-anonymous input{width:auto}
 .honeypot{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
@@ -108,7 +108,8 @@ section{padding-block:52px}
 <button class="menu" id="menu" aria-expanded="false" aria-controls="links">Menu ☰</button>
 <div class="links" id="links">
 <a href="#mysli">Przemyślenia</a>
-<a href="#refleksje">Dodaj własną refleksję</a>
+<a href="#refleksje">Refleksje</a>
+<a href="#ogloszenia">Ogłoszenia</a>
 <a href="#slowo">Słowo Boże</a>
 <a href="#galeria">Galeria</a>
 <a href="#wspolnota">Wspólnota</a>
@@ -154,13 +155,30 @@ section{padding-block:52px}
         <input name="website" tabindex="-1" autocomplete="off">
       </label>
       <button class="btn" type="submit">Opublikuj refleksję</button>
-      <p class="note" id="reflection-status" aria-live="polite">Wpis pojawi się od razu i będzie publicznie widoczny. Nie podawaj danych wrażliwych — po publikacji nie można samodzielnie edytować ani usunąć wpisu.</p>
+      <p class="note" id="reflection-status" aria-live="polite">Wpis pojawi się od razu. Po publikacji możesz usunąć go z tej samej przeglądarki, na której go dodasz.</p>
     </form>
     <div>
       <div class="reflection-list" id="reflection-list" aria-live="polite">
         <p class="empty">Ładowanie refleksji...</p>
       </div>
     </div>
+  </div>
+</section>
+<section class="wrap" id="ogloszenia">
+  <div class="eyebrow">Wiadomości wspólnoty</div>
+  <h2>Ogłoszenia.</h2>
+  <p class="sub">Podziel się informacją o spotkaniu, wydarzeniu lub ważnej sprawie dotyczącej wspólnoty. Ogłoszenia są publikowane od razu.</p>
+  <div class="reflection-layout">
+    <form class="reflection-form" id="announcement-form">
+      <label>Tytuł ogłoszenia<input name="title" maxlength="120" minlength="3" required placeholder="Np. Najbliższe spotkanie wspólnoty"></label>
+      <label>Twój podpis<input name="authorName" id="announcement-author" maxlength="80" required placeholder="Np. Anna"></label>
+      <label class="reflection-anonymous"><input type="checkbox" name="anonymous" id="announcement-anonymous"> Opublikuj anonimowo</label>
+      <label>Treść ogłoszenia<textarea name="body" minlength="10" maxlength="3000" required placeholder="Treść ogłoszenia..."></textarea></label>
+      <label class="honeypot" aria-hidden="true">Nie wypełniaj tego pola<input name="website" tabindex="-1" autocomplete="off"></label>
+      <button class="btn" type="submit">Opublikuj ogłoszenie</button>
+      <p class="note" id="announcement-status" aria-live="polite">Ogłoszenie będzie od razu publiczne. Możesz usunąć własny wpis z tej samej przeglądarki.</p>
+    </form>
+    <div class="reflection-list" id="announcement-list" aria-live="polite"><p class="empty">Ładowanie ogłoszeń...</p></div>
   </div>
 </section>
 <div class="strip"><div class="wrap stripin">
@@ -389,91 +407,153 @@ async function loadGallery() {
   renderGallery();
 }
 
+const REFLECTION_OWNER_KEY = "rycerstwo_reflection_owner_tokens";
+const ANNOUNCEMENT_OWNER_KEY = "rycerstwo_announcement_owner_tokens";
+function readOwnerMap(key) {
+  try { return JSON.parse(localStorage.getItem(key) || "{}"); } catch { return {}; }
+}
+function saveCommunityOwnerToken(kind, id, token) {
+  const key = kind === "reflection" ? REFLECTION_OWNER_KEY : ANNOUNCEMENT_OWNER_KEY;
+  const map = readOwnerMap(key);
+  map[String(id)] = token;
+  localStorage.setItem(key, JSON.stringify(map));
+}
+function forgetCommunityOwnerToken(kind, id) {
+  const key = kind === "reflection" ? REFLECTION_OWNER_KEY : ANNOUNCEMENT_OWNER_KEY;
+  const map = readOwnerMap(key);
+  delete map[String(id)];
+  localStorage.setItem(key, JSON.stringify(map));
+}
+async function deleteCommunityPost(kind, id, button) {
+  const isReflection = kind === "reflection";
+  const key = isReflection ? REFLECTION_OWNER_KEY : ANNOUNCEMENT_OWNER_KEY;
+  const token = readOwnerMap(key)[String(id)];
+  if (!token || !confirm("Czy na pewno chcesz usunąć ten własny wpis?")) return;
+  button.disabled = true;
+  button.textContent = "Usuwanie...";
+  const { data: result, error } = await sb.functions.invoke("gallery-manage", {
+    body: {
+      action: isReflection ? "delete_reflection" : "delete_announcement",
+      ...(isReflection ? { reflectionId: String(id) } : { announcementId: String(id) }),
+      ownerToken: token
+    }
+  });
+  if (error || result?.deleted !== true) {
+    console.error("Błąd usuwania wpisu:", error);
+    alert("Nie udało się usunąć wpisu. Spróbuj ponownie.");
+    button.disabled = false;
+    button.textContent = "Usuń mój wpis";
+    return;
+  }
+  forgetCommunityOwnerToken(kind, id);
+  if (isReflection) await loadReflections(); else await loadAnnouncements();
+}
+function postDeleteButton(kind, id) {
+  const key = kind === "reflection" ? REFLECTION_OWNER_KEY : ANNOUNCEMENT_OWNER_KEY;
+  return readOwnerMap(key)[String(id)]
+    ? `<div class="photo-actions"><button class="delete-photo" type="button" data-community-kind="${kind}" data-community-id="${esc(id)}">Usuń mój wpis</button></div>`
+    : "";
+}
+function wireCommunityDeleteButtons(container) {
+  container.querySelectorAll("[data-community-kind]").forEach(button => {
+    button.addEventListener("click", () => deleteCommunityPost(button.dataset.communityKind, button.dataset.communityId, button));
+  });
+}
 async function loadReflections() {
   const list = $("reflection-list");
-  const { data: reflections, error } = await sb
-    .from("community_reflections")
+  const { data: reflections, error } = await sb.from("community_reflections")
     .select("id, author_name, is_anonymous, body, created_at")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
+    .order("created_at", { ascending: false }).limit(100);
   if (error) {
     console.error("Błąd pobierania refleksji:", error);
     list.innerHTML = '<p class="empty">Nie udało się pobrać refleksji. Spróbuj ponownie później.</p>';
     return;
   }
-
   if (!reflections || !reflections.length) {
     list.innerHTML = '<p class="empty">Bądź pierwszą osobą, która podzieli się refleksją.</p>';
     return;
   }
-
   list.innerHTML = reflections.map(item => {
     const author = item.is_anonymous ? "Anonimowo" : item.author_name;
-    const date = new Date(item.created_at).toLocaleDateString("pl-PL", {
-      day: "numeric", month: "long", year: "numeric"
-    });
-    return `<article class="reflection-card">
-      <p>${esc(item.body)}</p>
+    const date = new Date(item.created_at).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" });
+    return `<article class="reflection-card"><p>${esc(item.body)}</p>
       <div class="reflection-meta"><span>${esc(author)}</span><time datetime="${esc(item.created_at)}">${esc(date)}</time></div>
-    </article>`;
+      ${postDeleteButton("reflection", item.id)}</article>`;
   }).join("");
+  wireCommunityDeleteButtons(list);
 }
-
-const reflectionForm = $("reflection-form");
-const reflectionAnonymous = $("reflection-anonymous");
-const reflectionAuthor = $("reflection-author");
-reflectionAnonymous.addEventListener("change", () => {
-  reflectionAuthor.disabled = reflectionAnonymous.checked;
-  reflectionAuthor.required = !reflectionAnonymous.checked;
-  if (reflectionAnonymous.checked) reflectionAuthor.value = "";
-});
-reflectionAuthor.required = true;
-
-reflectionForm.addEventListener("submit", async e => {
-  e.preventDefault();
-  const form = e.currentTarget;
-  const formData = new FormData(form);
-  const status = $("reflection-status");
-  const button = form.querySelector('button[type="submit"]');
-  const isAnonymous = reflectionAnonymous.checked;
-  const body = String(formData.get("body") || "").trim();
-  const authorName = String(formData.get("authorName") || "").trim();
-
-  if (body.length < 10 || body.length > 3000) {
-    status.textContent = "Refleksja powinna mieć od 10 do 3000 znaków.";
+async function loadAnnouncements() {
+  const list = $("announcement-list");
+  const { data: items, error } = await sb.from("community_announcements")
+    .select("id, title, author_name, is_anonymous, body, created_at")
+    .order("created_at", { ascending: false }).limit(100);
+  if (error) {
+    console.error("Błąd pobierania ogłoszeń:", error);
+    list.innerHTML = '<p class="empty">Nie udało się pobrać ogłoszeń. Spróbuj ponownie później.</p>';
     return;
   }
-  if (!isAnonymous && (!authorName || authorName.length > 80)) {
-    status.textContent = "Wpisz podpis lub wybierz publikację anonimową.";
+  if (!items || !items.length) {
+    list.innerHTML = '<p class="empty">Nie ma jeszcze ogłoszeń.</p>';
     return;
   }
+  list.innerHTML = items.map(item => {
+    const author = item.is_anonymous ? "Anonimowo" : item.author_name;
+    const date = new Date(item.created_at).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" });
+    return `<article class="reflection-card"><div class="category">Ogłoszenie</div><h3>${esc(item.title)}</h3><p>${esc(item.body)}</p>
+      <div class="reflection-meta"><span>${esc(author)}</span><time datetime="${esc(item.created_at)}">${esc(date)}</time></div>
+      ${postDeleteButton("announcement", item.id)}</article>`;
+  }).join("");
+  wireCommunityDeleteButtons(list);
+}
+function setupAnonymousToggle(checkboxId, authorId) {
+  const checkbox = $(checkboxId), author = $(authorId);
+  checkbox.addEventListener("change", () => {
+    author.disabled = checkbox.checked;
+    author.required = !checkbox.checked;
+    if (checkbox.checked) author.value = "";
+  });
+}
+setupAnonymousToggle("reflection-anonymous", "reflection-author");
+setupAnonymousToggle("announcement-anonymous", "announcement-author");
+$("reflection-author").required = true;
+$("announcement-author").required = true;
 
-  button.disabled = true;
-  status.textContent = "Publikowanie refleksji...";
-  try {
-    const { data: result, error } = await sb.functions.invoke("gallery-manage", {
-      body: {
-        action: "submit_reflection",
-        body,
-        authorName,
-        isAnonymous,
-        website: String(formData.get("website") || "")
-      }
-    });
-    if (error || !result?.reflectionId) throw error || new Error("Nie udało się opublikować refleksji.");
-    form.reset();
-    reflectionAuthor.disabled = false;
-    reflectionAuthor.required = true;
-    status.textContent = "Dziękujemy! Twoja refleksja jest już opublikowana.";
-    await loadReflections();
-  } catch (error) {
-    console.error("Błąd publikowania refleksji:", error);
-    status.textContent = "Nie udało się opublikować wpisu. Spróbuj ponownie za chwilę.";
-  } finally {
-    button.disabled = false;
-  }
-});
+async function submitCommunityPost(formId, statusId, action, kind) {
+  const form = $(formId);
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const fd = new FormData(form), status = $(statusId), button = form.querySelector('button[type="submit"]');
+    const isAnonymous = form.querySelector('input[name="anonymous"]').checked;
+    const body = String(fd.get("body") || "").trim();
+    const authorName = String(fd.get("authorName") || "").trim();
+    const title = String(fd.get("title") || "").trim();
+    if (body.length < 10 || body.length > 3000) { status.textContent = "Treść powinna mieć od 10 do 3000 znaków."; return; }
+    if (!isAnonymous && (!authorName || authorName.length > 80)) { status.textContent = "Wpisz podpis lub wybierz publikację anonimową."; return; }
+    if (action === "submit_announcement" && (title.length < 3 || title.length > 120)) { status.textContent = "Tytuł powinien mieć od 3 do 120 znaków."; return; }
+    const ownerToken = crypto.randomUUID() + crypto.randomUUID();
+    button.disabled = true;
+    status.textContent = action === "submit_announcement" ? "Publikowanie ogłoszenia..." : "Publikowanie refleksji...";
+    try {
+      const { data: result, error } = await sb.functions.invoke("gallery-manage", {
+        body: { action, body, authorName, isAnonymous, ownerToken, title,
+          website: String(fd.get("website") || "") }
+      });
+      const id = kind === "reflection" ? result?.reflectionId : result?.announcementId;
+      if (error || !id) throw error || new Error("Nie udało się opublikować wpisu.");
+      saveCommunityOwnerToken(kind, id, ownerToken);
+      form.reset();
+      $(kind === "reflection" ? "reflection-author" : "announcement-author").disabled = false;
+      $(kind === "reflection" ? "reflection-author" : "announcement-author").required = true;
+      status.textContent = "Dziękujemy! Wpis jest już opublikowany. Możesz go usunąć z tej przeglądarki.";
+      if (kind === "reflection") await loadReflections(); else await loadAnnouncements();
+    } catch (error) {
+      console.error("Błąd publikowania wpisu:", error);
+      status.textContent = "Nie udało się opublikować wpisu. Spróbuj ponownie za chwilę.";
+    } finally { button.disabled = false; }
+  });
+}
+submitCommunityPost("reflection-form", "reflection-status", "submit_reflection", "reflection");
+submitCommunityPost("announcement-form", "announcement-status", "submit_announcement", "announcement");
 
 const publicPhotoForm = $("public-photo-form");
 
@@ -584,6 +664,7 @@ $("year").textContent = new Date().getFullYear();
 render();
 loadGallery();
 loadReflections();
+loadAnnouncements();
 </script>
 </body>
 </html>
