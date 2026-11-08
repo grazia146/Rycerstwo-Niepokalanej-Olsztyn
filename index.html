@@ -52,6 +52,15 @@ h2{font-size:clamp(32px,4vw,45px);font-weight:normal;line-height:1.2;margin:12px
 .photo{margin:0;background:white;border:1px solid var(--line)}
 .photo img{width:100%;height:220px;object-fit:cover;display:block}
 .photo figcaption{padding:12px;font-size:14px}
+.photo{position:relative}
+.photo img{cursor:zoom-in}
+.photo-actions{display:flex;justify-content:flex-end;padding:0 12px 10px}
+.delete-photo{border:1px solid #c9cbd0;background:white;color:#8b3030;padding:6px 10px;font:11px Arial,sans-serif;cursor:pointer}
+.delete-photo:disabled{opacity:.5;cursor:wait}
+.lightbox{position:fixed;inset:0;z-index:20;background:#101827ed;display:none;align-items:center;justify-content:center;padding:24px}
+.lightbox.open{display:flex}
+.lightbox img{max-width:min(100%,1100px);max-height:85vh;object-fit:contain}
+.lightbox-close{position:absolute;top:16px;right:18px;border:1px solid #ffffff70;background:#17243a;color:white;padding:10px 14px;cursor:pointer;font:14px Arial,sans-serif}
 .empty{padding:25px;border:1px dashed #c9cbd0;color:var(--muted);text-align:center}
 .about{display:grid;grid-template-columns:.7fr 1.3fr;gap:30px;align-items:center;background:#eeece5;padding:32px}
 .about-icon{display:grid;place-items:center;min-height:210px;background:#dce4ee;font-size:90px;color:var(--blue)}
@@ -187,34 +196,12 @@ section{padding-block:52px}
 </form>
 </div>
 </section>
-<section class="wrap" id="panel">
-<div style="padding:25px;background:white;border:1px solid #e6e4dc">
-<div class="eyebrow">Wersja demonstracyjna</div>
-<h2>Dodawanie treści</h2>
-<p class="note">Ten prosty panel zapisuje treści wyłącznie w bieżącej przeglądarce. Nie jest zabezpieczony hasłem i nie stanowi jeszcze panelu internetowego.</p>
-<h3>Dodaj refleksję</h3>
-<form id="article-form">
-<label>Tytuł<input name="title" required maxlength="120"></label>
-<label>Kategoria<input name="category" value="Refleksja" required maxlength="60"></label>
-<label>Treść<textarea name="body" required maxlength="4000"></textarea></label>
-<button class="btn">Dodaj artykuł</button>
-</form>
-<h3>Zmień cytat biblijny</h3>
-<form id="quote-form">
-<label>Cytat<textarea name="text" required maxlength="1000"></textarea></label>
-<label>Źródło<input name="ref" required maxlength="100"></label>
-<button class="btn">Zapisz cytat</button>
-</form>
-<h3>Dodaj zdjęcie</h3>
-<form id="photo-form">
-<label>Opis zdjęcia<input name="caption" required maxlength="100"></label>
-<label>Fotografia (JPG, PNG lub WebP)<input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required></label>
-<button class="btn">Dodaj zdjęcie</button>
-</form>
-<p class="note" id="panel-status" aria-live="polite"></p>
-</div>
-</section>
+
 </main>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Powiększone zdjęcie">
+<button class="lightbox-close" id="lightbox-close" type="button">Zamknij ✕</button>
+<img id="lightbox-image" alt="">
+</div>
 <footer><div class="wrap foot"><span>© <span id="year"></span> Rycerstwo Niepokalanej · Olsztyn</span><a href="#home">Powrót na górę ↑</a></div></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script> 
@@ -243,8 +230,8 @@ let data=readData();
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function save(){
-try{localStorage.setItem(KEY,JSON.stringify(data));$("panel-status").textContent="Zapisano w tej przeglądarce."}
-catch(e){$("panel-status").textContent="Brak miejsca na zapis. Spróbuj mniejszego zdjęcia."}
+try{localStorage.setItem(KEY,JSON.stringify(data));}
+catch(e){console.warn("Nie udało się zapisać danych lokalnych:",e)}
 }
 function render(){
 $("articles").innerHTML=data.articles.map(a=>
@@ -263,22 +250,80 @@ $("articles").innerHTML=data.articles.map(a=>
 }
 let galleryPhotos = [];
 
+const OWNER_KEY = "rycerstwo_gallery_owner_tokens";
+function getOwnerTokens() {
+  try { return JSON.parse(localStorage.getItem(OWNER_KEY) || "{}"); }
+  catch { return {}; }
+}
+function saveOwnerToken(photoId, token) {
+  const tokens = getOwnerTokens();
+  tokens[String(photoId)] = token;
+  localStorage.setItem(OWNER_KEY, JSON.stringify(tokens));
+}
+function forgetOwnerToken(photoId) {
+  const tokens = getOwnerTokens();
+  delete tokens[String(photoId)];
+  localStorage.setItem(OWNER_KEY, JSON.stringify(tokens));
+}
+function openLightbox(url, caption) {
+  $("lightbox-image").src = url;
+  $("lightbox-image").alt = caption || "Zdjęcie z galerii";
+  $("lightbox").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function closeLightbox() {
+  $("lightbox").classList.remove("open");
+  $("lightbox-image").src = "";
+  document.body.style.overflow = "";
+}
+$("lightbox-close").addEventListener("click", closeLightbox);
+$("lightbox").addEventListener("click", e => {
+  if (e.target === $("lightbox")) closeLightbox();
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeLightbox();
+});
+
 function renderGallery() {
   const gallery = $("gallery");
+  const tokens = getOwnerTokens();
 
   gallery.innerHTML = galleryPhotos.map(p => {
-    const url = sb.storage
-      .from("gallery")
-      .getPublicUrl(p.storage_path).data.publicUrl;
-
+    const url = sb.storage.from("gallery").getPublicUrl(p.storage_path).data.publicUrl;
+    const canDelete = Boolean(tokens[String(p.id)]);
     return `<figure class="photo">
-      <img src="${esc(url)}"
-           alt="${esc(p.caption)}"
-           loading="lazy">
+      <img src="${esc(url)}" alt="${esc(p.caption)}" loading="lazy"
+           data-photo-url="${esc(url)}" data-photo-caption="${esc(p.caption)}">
       <figcaption>${esc(p.caption)}</figcaption>
+      ${canDelete ? `<div class="photo-actions"><button class="delete-photo" type="button" data-photo-id="${esc(p.id)}">Usuń moje zdjęcie</button></div>` : ""}
     </figure>`;
-  }).join("") ||
-    '<p class="empty" style="grid-column:1/-1">Galeria czeka na pierwsze zdjęcia.</p>';
+  }).join("") || '<p class="empty" style="grid-column:1/-1">Galeria czeka na pierwsze zdjęcia.</p>';
+
+  gallery.querySelectorAll("img[data-photo-url]").forEach(img => {
+    img.addEventListener("click", () => openLightbox(img.dataset.photoUrl, img.dataset.photoCaption));
+  });
+  gallery.querySelectorAll(".delete-photo").forEach(button => {
+    button.addEventListener("click", async () => {
+      if (!confirm("Czy na pewno chcesz usunąć to zdjęcie?")) return;
+      const token = getOwnerTokens()[String(button.dataset.photoId)];
+      if (!token) return;
+      button.disabled = true;
+      button.textContent = "Usuwanie...";
+      const { error } = await sb.rpc("delete_gallery_photo", {
+        p_photo_id: String(button.dataset.photoId),
+        p_owner_token: token
+      });
+      if (error) {
+        console.error("Błąd usuwania zdjęcia:", error);
+        alert("Nie udało się usunąć zdjęcia. Spróbuj ponownie.");
+        button.disabled = false;
+        button.textContent = "Usuń moje zdjęcie";
+        return;
+      }
+      forgetOwnerToken(button.dataset.photoId);
+      await loadGallery();
+    });
+  });
 }
 
 async function loadGallery() {
@@ -353,14 +398,15 @@ publicPhotoForm.addEventListener("submit", async e => {
     if (uploadError) throw uploadError;
     uploaded = true;
 
-    const { error: insertError } = await sb
-      .from("gallery_photos")
-      .insert({
-        caption,
-        storage_path: path
-      });
+    const ownerToken = crypto.randomUUID() + crypto.randomUUID();
+    const { data: photoId, error: insertError } = await sb.rpc("publish_gallery_photo", {
+      p_caption: caption,
+      p_storage_path: path,
+      p_owner_token: ownerToken
+    });
 
     if (insertError) throw insertError;
+    saveOwnerToken(photoId, ownerToken);
 
     status.textContent = "Zdjęcie zostało dodane!";
     form.reset();
@@ -384,26 +430,6 @@ publicPhotoForm.addEventListener("submit", async e => {
   } finally {
     button.disabled = false;
   }
-});
-$("article-form").addEventListener("submit",e=>{
-e.preventDefault();const f=new FormData(e.currentTarget);
-data.articles.unshift({id:Date.now().toString(),title:f.get("title").trim(),category:f.get("category").trim(),body:f.get("body").trim()});
-save();render();e.currentTarget.reset();
-});
-$("quote-form").addEventListener("submit",e=>{
-e.preventDefault();const f=new FormData(e.currentTarget);
-data.quote={text:f.get("text").trim(),ref:f.get("ref").trim()};save();render();
-});
-$("photo-form").addEventListener("submit",e=>{
-e.preventDefault();const f=new FormData(e.currentTarget),file=f.get("photo");
-if(!file||!file.type.startsWith("image/"))return;
-if(file.size>800000){$("panel-status").textContent="Zdjęcie musi mieć mniej niż 800 KB. Zmniejsz je przed dodaniem.";return;}
-const reader=new FileReader();
-reader.onload=()=>{
-data.photos.push({id:Date.now().toString(),caption:f.get("caption").trim(),src:reader.result});
-save();render();e.currentTarget.reset();
-};
-reader.readAsDataURL(file);
 });
 $("contact").addEventListener("submit",e=>{
 e.preventDefault();
