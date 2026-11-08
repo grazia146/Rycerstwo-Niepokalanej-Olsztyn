@@ -309,11 +309,11 @@ function renderGallery() {
       if (!token) return;
       button.disabled = true;
       button.textContent = "Usuwanie...";
-      const { error } = await sb.rpc("delete_gallery_photo", {
+      const { data: deleted, error } = await sb.rpc("delete_gallery_photo", {
         p_photo_id: String(button.dataset.photoId),
         p_owner_token: token
       });
-      if (error) {
+      if (error || deleted !== true) {
         console.error("Błąd usuwania zdjęcia:", error);
         alert("Nie udało się usunąć zdjęcia. Spróbuj ponownie.");
         button.disabled = false;
