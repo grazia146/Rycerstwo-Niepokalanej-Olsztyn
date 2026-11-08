@@ -35,6 +35,7 @@ h1 em{color:var(--blue)}
 .community-photo-icon{font-size:58px;line-height:1;color:var(--blue);margin-bottom:14px}
 .community-photo-title{font-size:21px;color:var(--ink);margin:0 0 6px}
 .community-photo-note{font:11px/1.6 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:0}
+.community-photo>img{display:block;width:100%;height:100%;min-height:276px;object-fit:cover;object-position:center}
 .strip{border-block:1px solid var(--line);background:#ffffff80}
 .stripin{display:grid;grid-template-columns:repeat(3,1fr);padding:23px 0;text-align:center}
 .strip strong{display:block;font-weight:normal;font-size:18px}
@@ -81,7 +82,7 @@ footer{padding:25px 0;border-top:1px solid var(--line);font:11px Arial,sans-seri
 .links{display:none;position:absolute;top:72px;left:0;right:0;background:var(--bg);padding:20px 5%;flex-direction:column;align-items:stretch}
 .links.open{display:flex}
 .hero{grid-template-columns:1fr;padding-block:48px;gap:25px}
-.community-photo{min-height:240px}.community-photo-placeholder{min-height:216px}.community-photo-title{font-size:18px}
+.community-photo{min-height:240px}.community-photo-placeholder{min-height:216px}.community-photo-title{font-size:18px}.community-photo>img{min-height:216px}
 section{padding-block:52px}
 .cards{grid-template-columns:1fr}
 .gallery{grid-template-columns:1fr 1fr}
@@ -119,7 +120,8 @@ section{padding-block:52px}
 <a class="btn light" href="#mysli">Czytaj refleksje ↗</a>
 </div>
 </div>
-<div class="community-photo" aria-label="Miejsce na zdjęcie wspólnoty">
+<div class="community-photo" aria-label="Zdjęcie wspólnoty">
+<img src="images/wspolnota.jpg" alt="Wspólnota Rycerstwa Niepokalanej w Olsztynie" onload="this.nextElementSibling.hidden=true" onerror="this.hidden=true">
 <div class="community-photo-placeholder">
 <div class="community-photo-icon" aria-hidden="true">✧</div>
 <p class="community-photo-title">Nasza wspólnota</p>
