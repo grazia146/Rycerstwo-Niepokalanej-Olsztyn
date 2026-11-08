@@ -53,6 +53,7 @@ h2{font-size:clamp(32px,4vw,45px);font-weight:normal;line-height:1.2;margin:12px
 .quote-edit-actions{display:flex;gap:10px;flex-wrap:wrap}
 .quote-edit-form .note{color:#e0d1af}
 .verse-archive{padding-block:55px}
+.verse-archive-edit{margin:18px 0 28px}
 .verse-history{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .verse-history-card{padding:22px;background:#fff;border:1px solid var(--line)}
 .verse-history-card blockquote{font:italic 18px/1.55 Georgia,serif;margin:0 0 14px;color:var(--ink)}
@@ -237,6 +238,7 @@ section{padding-block:52px}
   <div class="eyebrow">Do których wracamy</div>
   <h2>Archiwum Słowa Bożego.</h2>
   <p class="sub">Wcześniejsze cytaty pozostają tutaj zapisane, nawet gdy na stronie pojawi się już nowe Słowo Boże.</p>
+  <button class="btn verse-archive-edit" type="button" id="quote-edit-open-archive">Edytuj aktualne Słowo Boże</button>
   <div class="verse-history" id="verse-history" aria-live="polite"><p class="empty">Ładowanie archiwum...</p></div>
 </section>
 <section class="wrap" id="galeria">
@@ -629,14 +631,19 @@ async function loadCommunityVerse() {
     return `<article class="verse-history-card"><blockquote>${esc(item.verse_text)}</blockquote><cite>${esc(item.verse_reference)}</cite><div class="verse-history-meta">W archiwum od ${esc(date)}${author}</div></article>`;
   }).join("");
 }
-$("quote-edit-open").addEventListener("click", () => {
+function openVerseEditor() {
   $("quote-edit-form").hidden = false;
   $("quote-edit-open").hidden = true;
+  $("quote-edit-open-archive").hidden = true;
+  $("quote-edit-form").scrollIntoView({ behavior: "smooth", block: "center" });
   $("verse-input").focus();
-});
+}
+$("quote-edit-open").addEventListener("click", openVerseEditor);
+$("quote-edit-open-archive").addEventListener("click", openVerseEditor);
 $("quote-edit-cancel").addEventListener("click", () => {
   $("quote-edit-form").hidden = true;
   $("quote-edit-open").hidden = false;
+  $("quote-edit-open-archive").hidden = false;
   $("quote-edit-status").textContent = "Zmiany anulowane.";
 });
 $("quote-edit-form").addEventListener("submit", async e => {
@@ -660,6 +667,7 @@ $("quote-edit-form").addEventListener("submit", async e => {
     status.textContent = "Nowe Słowo Boże zostało opublikowane. Poprzedni cytat zapisano w archiwum.";
     $("quote-edit-form").hidden = true;
     $("quote-edit-open").hidden = false;
+    $("quote-edit-open-archive").hidden = false;
     await loadCommunityVerse();
   } catch (error) {
     console.error("Nie udało się zmienić Słowa Bożego:", error);
