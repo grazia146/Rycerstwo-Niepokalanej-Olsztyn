@@ -1,8 +1,8 @@
 {
-  "backup_created_at": "2026-11-08T16:27:37.213Z",
+  "backup_created_at": "2026-11-15T16:30:07.424Z",
   "project": "Rycerstwo Niepokalanej Olsztyn",
   "bucket": "gallery",
-  "photo_count": 2,
+  "photo_count": 5,
   "photos": [
     {
       "id": 5,
@@ -15,6 +15,24 @@
       "caption": "Wizyta w Niepokalanowie",
       "storage_path": "60e098a3-beef-4083-9f87-15cf663b308e.jpg",
       "created_at": "2026-11-08T16:08:11.057104+00:00"
+    },
+    {
+      "id": 12,
+      "caption": "Ośrodek Formacyjny Niepokalanów - Lasek  Teresin",
+      "storage_path": "978bd1b7-945b-44e4-a1a1-110309daa626.jpg",
+      "created_at": "2026-11-12T20:10:14.67761+00:00"
+    },
+    {
+      "id": 13,
+      "caption": "Rekolekcje MI 25-27 września 2026 rok",
+      "storage_path": "21100bd5-66f1-4254-8fc5-2eb1b5fc3820.jpg",
+      "created_at": "2026-11-12T20:10:58.735055+00:00"
+    },
+    {
+      "id": 15,
+      "caption": "Ośrodek Formacyjny Niepokalanów - Lasek",
+      "storage_path": "d54add3f-6455-446e-8025-2b81ffc896c4.jpg",
+      "created_at": "2026-11-12T20:38:35.980575+00:00"
     }
   ]
 }
