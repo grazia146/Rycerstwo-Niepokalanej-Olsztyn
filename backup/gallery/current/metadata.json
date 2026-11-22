@@ -1,8 +1,8 @@
 {
-  "backup_created_at": "2026-11-15T16:30:07.424Z",
+  "backup_created_at": "2026-11-22T16:37:30.637Z",
   "project": "Rycerstwo Niepokalanej Olsztyn",
   "bucket": "gallery",
-  "photo_count": 5,
+  "photo_count": 7,
   "photos": [
     {
       "id": 5,
@@ -33,6 +33,18 @@
       "caption": "Ośrodek Formacyjny Niepokalanów - Lasek",
       "storage_path": "d54add3f-6455-446e-8025-2b81ffc896c4.jpg",
       "created_at": "2026-11-12T20:38:35.980575+00:00"
+    },
+    {
+      "id": 16,
+      "caption": "Miejsce spotkań",
+      "storage_path": "39c57f93-549a-415b-a794-cba9067c3563.jpg",
+      "created_at": "2026-11-15T19:45:18.550479+00:00"
+    },
+    {
+      "id": 17,
+      "caption": "Spotkanie",
+      "storage_path": "88b73719-3aa9-42bf-83a4-66dcc9b6f1d6.jpg",
+      "created_at": "2026-11-15T19:49:36.310017+00:00"
     }
   ]
 }
